@@ -18,7 +18,7 @@ jobs:
           # 生成 0-59 的随机分钟数
           RANDOM_MIN=$((RANDOM % 40))
           # 替换 cron 表达式的分钟部分（保留小时、日期、星期不变）
-          sed -i -E "s/(- cron: ')[0-9]+( [2,9,13]+ \* \* [6,0]+')/\1${RANDOM_MIN}\2/g" .github/workflows/run.yml
+          sed -i -E "s/(- cron: ')[0-9]+([0,3,5,8,10]+ \* \* [6,0]+')/\1${RANDOM_MIN}\2/g" .github/workflows/run.yml
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add .
