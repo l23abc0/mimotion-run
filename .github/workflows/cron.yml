@@ -4,7 +4,6 @@ on:
     workflows: ["刷步数"]
     types:
       - completed
-  workflow_dispatch:  # 添加手动触发
    
 jobs:
   repo-sync:
