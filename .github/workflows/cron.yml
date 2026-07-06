@@ -1,11 +1,11 @@
 name: 随机定时运行
 on:
-  watch:
-    types: started
   workflow_run:
     workflows: ["刷步数"]
     types:
       - completed
+  workflow_dispatch:  # 添加手动触发
+   
 jobs:
   repo-sync:
     runs-on: ubuntu-latest
