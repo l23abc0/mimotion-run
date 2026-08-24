@@ -226,30 +226,43 @@ class MiMotion():
     def main(self):
         import time, random, math, traceback, requests, re
     
-        # ---------- 1. 获取步数比例 ----------
+        # ---------- 1. 获取当前时间(精确到分钟) ----------
         try:
             user = str(self.check_item.get("user"))
             password = str(self.check_item.get("password"))
             hea = {'User-Agent': 'Mozilla/5.0'}
-            url = 'https://apps.game.qq.com/CommArticle/app/reg/gdate.php'  # 去空格
+            url = 'https://apps.game.qq.com/CommArticle/app/reg/gdate.php'  # 获取北京时间
             r = requests.get(url, headers=hea, timeout=10)
             if r.status_code != 200:
-                print(f'[步数比例] 状态码={r.status_code} 响应={r.text}')
-                hour = 12  # 给个默认值
+                print(f'[获取时间] 状态码={r.status_code} 响应={r.text}')
+                hour, minute = 12, 0  # 给个默认值
             else:
-                reg = re.search(r'\d{4}-\d{2}-\d{2} (\d{2}):\d{2}:\d{2}', r.text)
+                # 同时提取 小时 和 分钟
+                reg = re.search(r'\d{4}-\d{2}-\d{2} (\d{2}):(\d{2}):\d{2}', r.text)
                 hour = int(reg.group(1)) if reg else 12
-            min_ratio = int(hour) / 22
-            max_ratio = int(hour) / 21
-            step_ratio = random.uniform(min_ratio, max_ratio)
+                minute = int(reg.group(2)) if reg else 0
         except Exception as e:
-            print('[步数比例] 异常:', e)
-            step_ratio = random.uniform(0.5, 0.9)
+            print('[获取时间] 异常:', e)
+            hour, minute = 12, 0
     
-        # ---------- 2. 计算步数范围 ----------
+        # ---------- 2. 计算步数范围 (严格递增，杜绝倒退) ----------
         try:
-            min_step = math.ceil(int(self.check_item.get("min_step", 10000)) * step_ratio)
-            max_step = math.ceil(int(self.check_item.get("max_step", 19999)) * step_ratio)
+            base_min_step = int(self.check_item.get("min_step", 10000))
+            base_max_step = int(self.check_item.get("max_step", 19999))
+            step_span = base_max_step - base_min_step
+            
+            # 将当前时间转换为当天的分钟数 (0 到 1439)
+            current_minutes = hour * 60 + minute
+            total_minutes_in_day = 1440 
+            
+            # 核心逻辑：将步数总跨度按当天分钟进度切分
+            # 计算当前时间点应该达到的最小步数和最大步数，区间互不重叠
+            current_min = base_min_step + (current_minutes / total_minutes_in_day) * step_span
+            current_max = base_min_step + ((current_minutes + 1) / total_minutes_in_day) * step_span
+            
+            min_step = math.ceil(current_min)
+            max_step = math.ceil(current_max)
+            
             if min_step > max_step:
                 min_step, max_step = max_step, min_step
         except Exception as e:
